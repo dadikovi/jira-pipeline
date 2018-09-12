@@ -1,7 +1,6 @@
 from briefly.process import *
 from briefly.common import *
-from jira_pipeline.commands.jira_connect import *
-from jira_pipeline.commands.read_properties import *
+from jira_pipeline.commands import *
 
 pipe = Pipeline('Connect to JIRA server')
 
