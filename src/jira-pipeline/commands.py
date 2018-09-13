@@ -2,32 +2,39 @@ from briefly.process import *
 from briefly.common import *
 from briefly.properties import *
 from jira_pipeline.exceptions import *
+from jira_pipeline.system import *
 
 @simple_process
 def jira_connect(self):
     """Simple process to initialize user session to JIRA system.    
     Attributes:
-        #1 - a Property object with the details of the JIRA system.
-    Returns:
-        #1 - an initialized System object.
-    TODO:
-        documentation of the required Property object"""
+        primary - JSON data with the details of the JIRA system.
+    Returns: an initialized System object.
+    TODO: documentation of the required Property object"""
 
-    p = self.read()
-    if(not isinstance(p, Properties)):
-        raise UnexpectedInputException(self.___name___ + ' requires Properties object as first input.')
+    try:
+        s = ""
+        for line in self.read():
+            s = s + line + "\n"
+        p = json.loads(s)
+    except Exception:
+        raise UnexpectedInputException('jira_connect requires JSON config string as primary input.')
+
+    s = System(p)
+    s.start_session()
+
+    return s    
 
 @simple_process
-def read_properties(self):
+def read_properties(self, path):
     """Simple process to create Properties object from given file path.    
     Attributes:
-        #1 - an str representing the file path of the property file.
-    Returns:
-        #1 - an initialized Properties object."""
+        path - an str representing the file path of the property file.
+    Returns: str representation of the Property object."""
 
     p = Properties()
-    p.load(self.read())
-    self.write(p)
+    p.load(path)
+    self.write(p.to_json())
 
 @simple_process
 def dump(self):

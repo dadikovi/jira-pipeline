@@ -4,6 +4,6 @@ from jira_pipeline.commands import *
 
 pipe = Pipeline('Connect to JIRA server')
 
-target = read_properties('example.properties') | jira_connect() | dump()
+internal_jira = pipe | read_properties('properties/internal_jira.properties') | jira_connect()
 
-pipe.run(target)
+pipe.run(internal_jira)

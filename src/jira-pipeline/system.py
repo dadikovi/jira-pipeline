@@ -2,8 +2,8 @@ from .jiraapi import JiraAPI
 
 class System:
 
-    def __init__(self, alias, config):
-        self.alias = alias
+    def __init__(self, config):
+        self.alias = config["alias"]
         self.config = config
 
     def get_config(self, alias):
