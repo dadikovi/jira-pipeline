@@ -1,40 +1,45 @@
 from briefly.process import *
 from briefly.common import *
-from briefly.properties import *
 from jira_pipeline.exceptions import *
 from jira_pipeline.system import *
+from jira_pipeline.utils import *
+from json.decoder import JSONDecodeError
+import json
 
 @simple_process
-def jira_connect(self):
-    """Simple process to initialize user session to JIRA system.    
+def query_issues(self, system, jql):
+    """Simple process to execute given JQL queries on specified JIRA system.
     Attributes:
-        primary - JSON data with the details of the JIRA system.
-    Returns: an initialized System object.
-    TODO: documentation of the required Property object"""
-
+        primary - dummy
+        jql - json representation of jql to execute with "jql" key
+        system - an initialized System object which represents the JIRA system where the JQL should be executed.
+    Returns: json representations of the queried issues."""
+    
     try:
-        s = ""
-        for line in self.read():
-            s = s + line + "\n"
-        p = json.loads(s)
-    except Exception:
-        raise UnexpectedInputException('jira_connect requires JSON config string as primary input.')
+        jql = json.loads(jql)["jql"]
+    except JSONDecodeError as e:
+        ErrorHandler.error("query_issues requires valid JSON object as second parameter. ", e)
 
-    s = System(p)
-    s.start_session()
-
-    return s    
+    u = system.api().search_url(jql)
+    j = system.get(u)
+    
+    if j:
+        links = system.api().parse_issue_links(j)
+        for u in links:
+            j = system.get(u)
+            if j:
+                self.write(Utils.jsonstr_to_formatable_str(json.dumps(j)))
 
 @simple_process
-def read_properties(self, path):
-    """Simple process to create Properties object from given file path.    
-    Attributes:
-        path - an str representing the file path of the property file.
-    Returns: str representation of the Property object."""
+def cut_key(self):
+    for j in self.read():
+        try:
+            issue = json.loads(j)
+            self.write(issue["key"])
+        except JSONDecodeError as e:
+            ErrorHandler.error("cut_key requires valid JSON objects as primary input. ", e)
 
-    p = Properties()
-    p.load(path)
-    self.write(p.to_json())
+
 
 @simple_process
 def dump(self):
