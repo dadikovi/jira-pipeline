@@ -4,6 +4,7 @@ from jira_pipeline.commands import *
 from jira_pipeline.utils import *
 from jira_pipeline.system import *
 
+
 pipe = Pipeline('Connect to JIRA server')
 
 # Parameters

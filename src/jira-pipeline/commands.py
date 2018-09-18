@@ -1,14 +1,15 @@
-from briefly.process import *
-from briefly.common import *
+#from briefly.process import *
+#from briefly.common import *
+from jira_pipeline.wrappers import *
 from jira_pipeline.exceptions import *
 from jira_pipeline.system import *
 from jira_pipeline.utils import *
 from json.decoder import JSONDecodeError
 import json
 
-@simple_process
+@jira_pipeline_process({})
 def query_issues(self, system, jql):
-    """Simple process to execute given JQL queries on specified JIRA system.
+    """Producer process to execute given JQL queries on specified JIRA system.
     Attributes:
         primary - dummy
         jql - json representation of jql to execute with "jql" key
@@ -28,22 +29,32 @@ def query_issues(self, system, jql):
         for u in links:
             j = system.get(u)
             if j:
-                self.write(Utils.jsonstr_to_formatable_str(json.dumps(j)))
+                self.write(Utils.jsonstr_to_formatable_str(json.dumps({
+                    "type": "issue",
+                    "value": j
+                })))
 
-@simple_process
+@jira_pipeline_process({"inputs":['issue']})
 def cut_key(self):
-    for j in self.read():
+    """Simple process which cuts the key from an issue
+    Attributes:
+        primary - issue to cut
+    Returns: the key of the issue."""
+    for issue in self.inputs["issue"]:
         try:
-            issue = json.loads(j)
-            self.write(issue["key"])
+            self.write(Utils.jsonstr_to_formatable_str(json.dumps({
+                    "type": "key",
+                    "value": issue["key"]
+            })))
         except JSONDecodeError as e:
             ErrorHandler.error("cut_key requires valid JSON objects as primary input. ", e)
 
-
-
-@simple_process
+@jira_pipeline_process({})
 def dump(self):
   '''Dump result to standard output.'''
-  for line in self.read():
-    self.write(line)
-    print (line)
+  for line in self.inputs["all"]:
+    self.write(Utils.jsonstr_to_formatable_str(json.dumps({
+                    "type": "text",
+                    "value": line
+    })))
+    print(line)
